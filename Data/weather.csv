@@ -1,4 +1,7 @@
 sourceid,referencetime,elementid,value,unit,timeoffset
+SN65370:0,2023-10-26 00:00:00+00:00,sum(precipitation_amount P1D),0.1,mm,PT6H
+SN65370:0,2023-10-25 00:00:00+00:00,sum(precipitation_amount P1D),0.1,mm,PT6H
+SN65370:0,2023-10-24 00:00:00+00:00,sum(precipitation_amount P1D),2.1,mm,PT6H
 SN65370:0,2023-10-23 00:00:00+00:00,sum(precipitation_amount P1D),0.0,mm,PT6H
 SN65370:0,2023-10-22 00:00:00+00:00,sum(precipitation_amount P1D),0.0,mm,PT6H
 SN65370:0,2023-10-21 00:00:00+00:00,sum(precipitation_amount P1D),0.0,mm,PT6H
@@ -361,9 +364,18 @@ SN65370:0,2022-10-30 00:00:00+00:00,sum(precipitation_amount P1D),3.6,mm,PT6H
 SN65370:0,2022-10-29 00:00:00+00:00,sum(precipitation_amount P1D),45.0,mm,PT6H
 SN65370:0,2022-10-28 00:00:00+00:00,sum(precipitation_amount P1D),3.5,mm,PT6H
 SN65370:0,2022-10-27 00:00:00+00:00,sum(precipitation_amount P1D),3.3,mm,PT6H
-SN65370:0,2022-10-26 00:00:00+00:00,sum(precipitation_amount P1D),5.1,mm,PT6H
-SN65370:0,2022-10-25 00:00:00+00:00,sum(precipitation_amount P1D),0.1,mm,PT6H
-SN65370:0,2022-10-24 00:00:00+00:00,sum(precipitation_amount P1D),2.1,mm,PT6H
+SN65310:0,2023-10-26 00:00:00+00:00,mean(air_temperature P1D),6.2,degC,PT0H
+SN65310:0,2023-10-26 00:00:00+00:00,mean(air_temperature P1D),7.5,degC,PT6H
+SN65310:0,2023-10-26 00:00:00+00:00,mean(wind_speed P1D),3.6,m/s,PT0H
+SN65310:0,2023-10-26 00:00:00+00:00,mean(relative_humidity P1D),76.0,percent,PT0H
+SN65310:0,2023-10-25 00:00:00+00:00,mean(air_temperature P1D),7.6,degC,PT0H
+SN65310:0,2023-10-25 00:00:00+00:00,mean(air_temperature P1D),8.0,degC,PT6H
+SN65310:0,2023-10-25 00:00:00+00:00,mean(wind_speed P1D),2.6,m/s,PT0H
+SN65310:0,2023-10-25 00:00:00+00:00,mean(relative_humidity P1D),84.0,percent,PT0H
+SN65310:0,2023-10-24 00:00:00+00:00,mean(air_temperature P1D),8.6,degC,PT0H
+SN65310:0,2023-10-24 00:00:00+00:00,mean(air_temperature P1D),9.3,degC,PT6H
+SN65310:0,2023-10-24 00:00:00+00:00,mean(wind_speed P1D),3.2,m/s,PT0H
+SN65310:0,2023-10-24 00:00:00+00:00,mean(relative_humidity P1D),86.0,percent,PT0H
 SN65310:0,2023-10-23 00:00:00+00:00,mean(air_temperature P1D),9.3,degC,PT0H
 SN65310:0,2023-10-23 00:00:00+00:00,mean(air_temperature P1D),8.4,degC,PT6H
 SN65310:0,2023-10-23 00:00:00+00:00,mean(wind_speed P1D),4.9,m/s,PT0H
@@ -1812,15 +1824,3 @@ SN65310:0,2022-10-27 00:00:00+00:00,mean(air_temperature P1D),11.3,degC,PT0H
 SN65310:0,2022-10-27 00:00:00+00:00,mean(air_temperature P1D),10.2,degC,PT6H
 SN65310:0,2022-10-27 00:00:00+00:00,mean(wind_speed P1D),7.4,m/s,PT0H
 SN65310:0,2022-10-27 00:00:00+00:00,mean(relative_humidity P1D),90.0,percent,PT0H
-SN65310:0,2022-10-26 00:00:00+00:00,mean(air_temperature P1D),10.3,degC,PT0H
-SN65310:0,2022-10-26 00:00:00+00:00,mean(air_temperature P1D),10.2,degC,PT6H
-SN65310:0,2022-10-26 00:00:00+00:00,mean(wind_speed P1D),6.0,m/s,PT0H
-SN65310:0,2022-10-26 00:00:00+00:00,mean(relative_humidity P1D),98.0,percent,PT0H
-SN65310:0,2022-10-25 00:00:00+00:00,mean(air_temperature P1D),9.5,degC,PT0H
-SN65310:0,2022-10-25 00:00:00+00:00,mean(air_temperature P1D),8.7,degC,PT6H
-SN65310:0,2022-10-25 00:00:00+00:00,mean(wind_speed P1D),3.8,m/s,PT0H
-SN65310:0,2022-10-25 00:00:00+00:00,mean(relative_humidity P1D),96.0,percent,PT0H
-SN65310:0,2022-10-24 00:00:00+00:00,mean(air_temperature P1D),8.2,degC,PT0H
-SN65310:0,2022-10-24 00:00:00+00:00,mean(air_temperature P1D),6.4,degC,PT6H
-SN65310:0,2022-10-24 00:00:00+00:00,mean(wind_speed P1D),3.6,m/s,PT0H
-SN65310:0,2022-10-24 00:00:00+00:00,mean(relative_humidity P1D),86.0,percent,PT0H
