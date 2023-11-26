@@ -2,7 +2,9 @@ from pyspark.sql import SparkSession
 import streamsync as ss
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
+"""
 # Its name starts with _, so this function won't be exposed
 
 # Import data
@@ -22,16 +24,43 @@ spark = SparkSession.builder.appName('SparkCassandraApp').\
     config('spark.sql.catalog.mycatalog', 'com.datastax.spark.connector.datasource.CassandraCatalog').\
     config('spark.cassandra.connection.port', '9042').getOrCreate()
 # Some warnings are to be expected.
+"""
 
 
 def _get_main_df():
-    # main_df = pd.read_csv('../../Data/summary_oneyear.csv')
+    main_df = pd.read_csv('../../Data/summary_oneyear.csv')
+    """
     main_df = df_fish = spark.read.format("org.apache.spark.sql.cassandra").options(
         table="fish_table_year", keyspace="fish_keyspace").load().toPandas()
-
+    """
     return main_df
 
 # Plot fishplant
+
+
+def _update_plotly_fishplant_pie(state):
+    fishplant = state["fishplant_df"]
+    selected = state["selected_plant"]
+
+    if selected != "all":
+        fishplant = fishplant[fishplant['name'] == selected]
+        selected_data = fishplant
+    else:
+        selected_data = fishplant
+        print('hei')
+
+    # Calculate the counts for 'haspd' column
+    value_counts = selected_data['haspd'].value_counts()
+
+    # Create a pie chart using Plotly Express
+    fig_fishplant_pie = px.pie(
+        names=value_counts.index,
+        values=value_counts.values,
+        title='Proportion of localities reporting Pancreas Disease (PD/Pd)',
+    )
+
+    # Assign the pie chart to state
+    state["plotly_fishplant_pie"] = fig_fishplant_pie
 
 
 def _update_plotly_fishplant(state):
@@ -68,12 +97,15 @@ def handle_click(state, payload):
     fishplant = state["fishplant_df"]
 
     fishplant = fishplant.drop_duplicates(subset=['name'])
-    fishplant = fishplant[['name', 'lat', 'lon']]
+    fishplant = fishplant[['name', 'lat', 'lon', 'haspd']]
     fishplant = fishplant.reset_index(drop=True)
 
     state["selected"] = fishplant["name"].values[payload[0]["pointNumber"]]
     state["selected_num"] = payload[0]["pointNumber"]
+    state["selected_plant"] = state["selected"]
+
     _update_plotly_fishplant(state)
+    _update_plotly_fishplant_pie(state)
 
 
 def handle_choice(state, payload):
@@ -84,7 +116,18 @@ def handle_choice(state, payload):
 
     state["selected"] = fishplant["name"].values[int(payload)]
     state["selected_num"] = int(payload)
+    state["selected_plant"] = state["selected"]
+
     _update_plotly_fishplant(state)
+    _update_plotly_fishplant_pie(state)
+
+
+def handle_columns(state, payload):
+    fishplant = state["fishplant_df"]
+    columns = fishplant.columns
+
+    state["selected_columns"] = columns.values[payload[0]["pointNumber"]]
+    state["selected_columns_num"] = payload[0]["pointNumber"]
 
 
 def _get_JSON(state):
@@ -101,9 +144,18 @@ def _get_JSON(state):
     my_json = {str(key): value for key, value in my_json.items()}
     state["fishplant_JSON"] = my_json
 
+
+def _get_JSON_col(state):
+    fishplant = state["fishplant_df"]
+    columns = fishplant.columns
+
+    my_json = dict(zip(list(range(len(columns))), columns.values))
+    # Convert keys to strings
+    my_json = {str(key): value for key, value in my_json.items()}
+    state["columns_JSON"] = my_json
+
+
 # Initialise the state
-
-
 # "_my_private_element" won't be serialised or sent to the frontend,
 # because it starts with an underscore (not used here)
 initial_state = ss.init_state({
@@ -114,7 +166,13 @@ initial_state = ss.init_state({
     "selected": "Click to select",
     "selected_num": -1,
     "fishplant_df": _get_main_df(),
+    "selected_plant": "all",
+    "selected_columns": "all",
+    "selected_columns_num": -1,
+
 })
 
 _update_plotly_fishplant(initial_state)
 _get_JSON(initial_state)
+_update_plotly_fishplant_pie(initial_state)
+_get_JSON_col(initial_state)

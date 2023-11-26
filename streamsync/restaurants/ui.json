@@ -45,7 +45,7 @@
                 "spec": "@{plotly_fishplant\n}"
             },
             "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
-            "position": 4,
+            "position": 3,
             "handlers": {
                 "plotly-click": "handle_click"
             },
@@ -70,7 +70,7 @@
                 "options": "@{fishplant_JSON}"
             },
             "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
-            "position": 3,
+            "position": 2,
             "handlers": {
                 "ss-option-change": "handle_choice"
             },
@@ -80,25 +80,45 @@
             },
             "visible": true
         },
-        "bfbblgv8x4v1fxyz": {
-            "id": "bfbblgv8x4v1fxyz",
-            "type": "webcamcapture",
-            "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
-            "content": {
-                "refreshRate": "200"
-            },
-            "handlers": {},
-            "position": 2,
-            "visible": true
-        },
         "ib0fzdexax2gjtlb": {
             "id": "ib0fzdexax2gjtlb",
             "type": "page",
-            "parentId": "root",
             "content": {},
-            "handlers": {},
+            "parentId": "root",
             "position": 1,
+            "handlers": {},
             "visible": true
+        },
+        "jr3me819zljjz323": {
+            "id": "jr3me819zljjz323",
+            "type": "plotlygraph",
+            "content": {
+                "spec": "@{plotly_fishplant_pie\n}"
+            },
+            "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
+            "position": 4,
+            "handlers": {
+                "plotly-click": "handle_click"
+            },
+            "visible": true
+        },
+        "ocvtyae4y9k4ljvn": {
+            "id": "ocvtyae4y9k4ljvn",
+            "type": "dropdowninput",
+            "content": {
+                "label": "Input Label",
+                "options": "@{columns_JSON}"
+            },
+            "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
+            "position": 5,
+            "handlers": {
+                "ss-option-change": "handle_columns"
+            },
+            "visible": true,
+            "binding": {
+                "eventType": "ss-option-change",
+                "stateRef": "selected_columns_num"
+            }
         }
     }
 }
