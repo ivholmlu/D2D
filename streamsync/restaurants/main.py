@@ -47,6 +47,30 @@ def _get_lice_df():
 # Plot fishplant
 
 
+def _model_predction(state):
+
+    lice = state["lice_df"]
+    selected_lice = state["selected_lice"]
+    type_lice = ['avgadultfemalelice', 'avgmobilelice', 'avgstationarylice']
+
+    if selected_lice in type_lice:
+        from statsmodels.tsa.arima.model import ARIMA
+
+        import statsmodels.api as sm
+
+        mod = sm.tsa.statespace.SARIMAX(lice[selected_lice],
+                                        lice[["seatemperature", "mean_air_temperature", "mean_relative_humidity",
+                                              "mean_wind_speed", "sum_precipitation_amount"]],
+                                        order=(1, 1, 1), seasonal_order=(0, 0, 0, 52), trend='c')
+        res = mod.fit(disp=False)
+
+        message = str(res.summary())
+    else:
+        message = "Choose lice type"
+
+    state["message"] = message
+
+
 def _update_plotly_lice(state):
     lice = state["lice_df"]
     selected_lice = state["selected_lice"]
@@ -182,6 +206,7 @@ def get_lice(state, payload):
     state["selected_lice_num"] = int(payload)
 
     _update_plotly_lice(state)
+    _model_predction(state)
 
 
 def _get_JSON(state):
@@ -236,6 +261,7 @@ initial_state = ss.init_state({
     "selected_lice": "Choose lice type",
     "selected_lice_num": -1,
     "lice_df": _get_lice_df(),
+    "message": None,
 })
 
 _update_plotly_fishplant(initial_state)
@@ -245,3 +271,4 @@ _get_JSON_col(initial_state)
 _update_plot_overtime(initial_state)
 _get_JSON_licetype(initial_state)
 _update_plotly_lice(initial_state)
+_model_predction(initial_state)

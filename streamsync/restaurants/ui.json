@@ -181,6 +181,17 @@
             "position": 2,
             "handlers": {},
             "visible": true
+        },
+        "wwt2r9k6ai7nqjrx": {
+            "id": "wwt2r9k6ai7nqjrx",
+            "type": "message",
+            "content": {
+                "message": "@{message}"
+            },
+            "parentId": "ib0fzdexax2gjtlb",
+            "position": 3,
+            "handlers": {},
+            "visible": true
         }
     }
 }
