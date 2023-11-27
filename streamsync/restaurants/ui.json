@@ -114,11 +114,73 @@
             "handlers": {
                 "ss-option-change": "handle_columns"
             },
-            "visible": true,
             "binding": {
                 "eventType": "ss-option-change",
                 "stateRef": "selected_columns_num"
-            }
+            },
+            "visible": true
+        },
+        "9h7jr06ng9lg6c50": {
+            "id": "9h7jr06ng9lg6c50",
+            "type": "message",
+            "content": {
+                "message": "@{selected_columns}"
+            },
+            "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
+            "position": 6,
+            "handlers": {},
+            "visible": true
+        },
+        "p5244p1e2c5u6k8a": {
+            "id": "p5244p1e2c5u6k8a",
+            "type": "plotlygraph",
+            "content": {
+                "spec": "@{plot_overtime\n}"
+            },
+            "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
+            "position": 7,
+            "handlers": {},
+            "visible": true
+        },
+        "k7fgvrktlvae07z5": {
+            "id": "k7fgvrktlvae07z5",
+            "type": "dropdowninput",
+            "content": {
+                "label": "Input Label",
+                "options": "@{lice_JSON}"
+            },
+            "parentId": "ib0fzdexax2gjtlb",
+            "position": 0,
+            "handlers": {
+                "ss-option-change": "get_lice"
+            },
+            "binding": {
+                "eventType": "ss-option-change",
+                "stateRef": "selected_lice_num"
+            },
+            "visible": true
+        },
+        "t91tt9tq21tdsqcm": {
+            "id": "t91tt9tq21tdsqcm",
+            "type": "message",
+            "content": {
+                "message": "@{selected_lice}"
+            },
+            "parentId": "ib0fzdexax2gjtlb",
+            "position": 1,
+            "handlers": {},
+            "visible": true
+        },
+        "w05wrnnuv5tqe59z": {
+            "id": "w05wrnnuv5tqe59z",
+            "type": "plotlygraph",
+            "content": {
+                "spec": "@{plotly_lice}"
+            },
+            "parentId": "ib0fzdexax2gjtlb",
+            "position": 2,
+            "handlers": {},
+            "visible": true
         }
     }
 }

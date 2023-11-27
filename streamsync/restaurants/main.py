@@ -35,7 +35,48 @@ def _get_main_df():
     """
     return main_df
 
+
+def _get_lice_df():
+    lice_df = pd.read_csv('../../Data/combine_df.csv')
+    """
+    lice_df = df_fish = spark.read.format("org.apache.spark.sql.cassandra").options(
+        table="lice_table", keyspace="fish_keyspace").load().toPandas()
+    """
+    return lice_df
+
 # Plot fishplant
+
+
+def _update_plotly_lice(state):
+    lice = state["lice_df"]
+    selected_lice = state["selected_lice"]
+
+    if selected_lice != "Choose lice type":
+        lice = lice[['referencetime', selected_lice]]
+        # Create a line plot using Plotly Express
+        fig_lice = px.line(lice, x='referencetime', y=selected_lice)
+
+        state["plotly_lice"] = fig_lice
+
+
+def _update_plot_overtime(state):
+    fishplant = state["fishplant_df"]
+    selected_columns = state["selected_columns"]
+
+    if selected_columns != "all":
+
+        # if column type is boolean, get the proportion of True
+        if fishplant[selected_columns].dtype == bool:
+            # Group by 'date' and calculate the mean for numeric columns
+            fishplant = fishplant.groupby(['date']).mean(
+                numeric_only=True).reset_index()
+
+        # Assuming 'name' and 'date' are columns in your DataFrame
+        fishplant = fishplant[['date'] + [selected_columns]]
+        # Create a line plot using Plotly Express
+        fig_overtime = px.line(fishplant, x='date', y=selected_columns)
+
+        state["plot_overtime"] = fig_overtime
 
 
 def _update_plotly_fishplant_pie(state):
@@ -126,8 +167,21 @@ def handle_columns(state, payload):
     fishplant = state["fishplant_df"]
     columns = fishplant.columns
 
-    state["selected_columns"] = columns.values[payload[0]["pointNumber"]]
-    state["selected_columns_num"] = payload[0]["pointNumber"]
+    state["selected_columns"] = columns.values[int(payload)]
+    state["selected_columns_num"] = int(payload)
+
+    _update_plot_overtime(state)
+
+
+def get_lice(state, payload):
+
+    lice = state["lice_df"]
+    columns = lice.columns
+
+    state["selected_lice"] = columns.values[int(payload)]
+    state["selected_lice_num"] = int(payload)
+
+    _update_plotly_lice(state)
 
 
 def _get_JSON(state):
@@ -155,6 +209,16 @@ def _get_JSON_col(state):
     state["columns_JSON"] = my_json
 
 
+def _get_JSON_licetype(state):
+    lice = state["lice_df"]
+    columns = lice.columns
+
+    my_json = dict(zip(list(range(len(columns))), columns.values))
+    # Convert keys to strings
+    my_json = {str(key): value for key, value in my_json.items()}
+    state["lice_JSON"] = my_json
+
+
 # Initialise the state
 # "_my_private_element" won't be serialised or sent to the frontend,
 # because it starts with an underscore (not used here)
@@ -169,10 +233,15 @@ initial_state = ss.init_state({
     "selected_plant": "all",
     "selected_columns": "all",
     "selected_columns_num": -1,
-
+    "selected_lice": "Choose lice type",
+    "selected_lice_num": -1,
+    "lice_df": _get_lice_df(),
 })
 
 _update_plotly_fishplant(initial_state)
 _get_JSON(initial_state)
 _update_plotly_fishplant_pie(initial_state)
 _get_JSON_col(initial_state)
+_update_plot_overtime(initial_state)
+_get_JSON_licetype(initial_state)
+_update_plotly_lice(initial_state)
