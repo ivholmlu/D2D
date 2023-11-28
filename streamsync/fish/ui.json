@@ -189,7 +189,7 @@
                 "message": "@{message}"
             },
             "parentId": "ib0fzdexax2gjtlb",
-            "position": 4,
+            "position": 5,
             "handlers": {},
             "visible": true
         },
@@ -198,7 +198,7 @@
             "type": "image",
             "content": {
                 "src": "https://media.npr.org/assets/img/2013/12/10/ap101018123881-ca0472fba716df4b485fff878b558284cdc89ab9-s1200.webp",
-                "caption": "Image Caption",
+                "caption": "too high",
                 "maxWidth": "",
                 "maxHeight": ""
             },
@@ -206,6 +206,18 @@
             "position": 3,
             "handlers": {},
             "visible": "too_high"
+        },
+        "saqq2plppf5ab2rx": {
+            "id": "saqq2plppf5ab2rx",
+            "type": "image",
+            "parentId": "ib0fzdexax2gjtlb",
+            "content": {
+                "src": "https://miro.medium.com/v2/resize:fit:640/format:webp/1*e6TxJuHs0ou8m32cOS-uTg.png",
+                "caption": "Image Caption"
+            },
+            "handlers": {},
+            "position": 4,
+            "visible": "missing"
         }
     }
 }

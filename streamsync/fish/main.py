@@ -116,6 +116,10 @@ def _update_plotly_lice(state):
         values = lice[selected_lice]
         too_high = any(value > data[selected_lice] for value in values)
 
+        
+        if len(values) < 51:
+            state['missing'] = True
+
         # Set the 'too_high' flag in the state
         state["too_high"] = too_high
         state["plotly_lice"] = fig_lice
@@ -307,6 +311,7 @@ initial_state = ss.init_state({
     "lice_df": _get_lice_df(),
     "message": None,
     "too_high": False,
+    "missing": False,
 })
 
 _update_plotly_fishplant(initial_state)
