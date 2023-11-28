@@ -3,7 +3,7 @@ import streamsync as ss
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-
+# from ../../Data_Sources.ipynb import get_year_data()
 """
 # Its name starts with _, so this function won't be exposed
 
@@ -74,12 +74,50 @@ def _model_predction(state):
 def _update_plotly_lice(state):
     lice = state["lice_df"]
     selected_lice = state["selected_lice"]
+    import random
+    import plotly.graph_objs as go  # Import go from Plotly for adding red lines
+
+    data = {
+        'mean_air_temperature': 20,
+        'mean_relative_humidity': 100,
+        'mean_wind_speed': 15,
+        'sum_precipitation_amount': 130,
+        'avgadultfemalelice': 0.9,
+        'avgmobilelice': 3,
+        'avgstationarylice': 0.7,
+        'seatemperature': 17,
+    }
+    values = []
 
     if selected_lice != "Choose lice type":
         lice = lice[['referencetime', selected_lice]]
         # Create a line plot using Plotly Express
         fig_lice = px.line(lice, x='referencetime', y=selected_lice)
 
+        # Get the first and last values along the x-axis
+        x_values = lice['referencetime']
+        first_x = x_values.iloc[0]
+        last_x = x_values.iloc[-1]
+
+        # Create a red line trace from the first value to the last value along the x-axis
+        red_line_trace = go.Scatter(
+            x=[first_x, last_x],  # Span from the first to the last value along x
+            # You can customize the y-coordinates as needed
+            y=[data[selected_lice], data[selected_lice]],
+            mode='lines',
+            line=dict(color='red'),
+            name='Red Line'
+        )
+
+        # Add the red line trace to the figure
+        fig_lice.add_trace(red_line_trace)
+
+        # Check if there are values higher than the red line
+        values = lice[selected_lice]
+        too_high = any(value > data[selected_lice] for value in values)
+
+        # Set the 'too_high' flag in the state
+        state["too_high"] = too_high
         state["plotly_lice"] = fig_lice
 
 
@@ -190,6 +228,8 @@ def handle_choice(state, payload):
 def handle_columns(state, payload):
     fishplant = state["fishplant_df"]
     columns = fishplant.columns
+    columns = columns.drop(
+        ['week', 'year', 'localityno', 'localityweekid', 'name', 'municipality', 'municipalityno', 'lat', 'lon', 'date'])
 
     state["selected_columns"] = columns.values[int(payload)]
     state["selected_columns_num"] = int(payload)
@@ -201,6 +241,7 @@ def get_lice(state, payload):
 
     lice = state["lice_df"]
     columns = lice.columns
+    print(columns)
 
     state["selected_lice"] = columns.values[int(payload)]
     state["selected_lice_num"] = int(payload)
@@ -227,6 +268,9 @@ def _get_JSON(state):
 def _get_JSON_col(state):
     fishplant = state["fishplant_df"]
     columns = fishplant.columns
+
+    columns = columns.drop(
+        ['week', 'year', 'localityno', 'localityweekid', 'name', 'municipality', 'municipalityno', 'lat', 'lon', 'date'])
 
     my_json = dict(zip(list(range(len(columns))), columns.values))
     # Convert keys to strings
@@ -262,6 +306,7 @@ initial_state = ss.init_state({
     "selected_lice_num": -1,
     "lice_df": _get_lice_df(),
     "message": None,
+    "too_high": False,
 })
 
 _update_plotly_fishplant(initial_state)

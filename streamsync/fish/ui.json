@@ -106,7 +106,7 @@
             "id": "ocvtyae4y9k4ljvn",
             "type": "dropdowninput",
             "content": {
-                "label": "Input Label",
+                "label": "Choose column over time",
                 "options": "@{columns_JSON}"
             },
             "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
@@ -189,9 +189,23 @@
                 "message": "@{message}"
             },
             "parentId": "ib0fzdexax2gjtlb",
-            "position": 3,
+            "position": 4,
             "handlers": {},
             "visible": true
+        },
+        "3qzq36lm6kdykapb": {
+            "id": "3qzq36lm6kdykapb",
+            "type": "image",
+            "content": {
+                "src": "https://media.npr.org/assets/img/2013/12/10/ap101018123881-ca0472fba716df4b485fff878b558284cdc89ab9-s1200.webp",
+                "caption": "Image Caption",
+                "maxWidth": "",
+                "maxHeight": ""
+            },
+            "parentId": "ib0fzdexax2gjtlb",
+            "position": 3,
+            "handlers": {},
+            "visible": "too_high"
         }
     }
 }
