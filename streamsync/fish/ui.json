@@ -19,7 +19,8 @@
             "type": "page",
             "content": {
                 "pageMode": "compact",
-                "emptinessColor": "#e9eef1"
+                "emptinessColor": "#e9eef1",
+                "key": "page1"
             },
             "parentId": "root",
             "position": 0,
@@ -83,7 +84,9 @@
         "ib0fzdexax2gjtlb": {
             "id": "ib0fzdexax2gjtlb",
             "type": "page",
-            "content": {},
+            "content": {
+                "key": "page2"
+            },
             "parentId": "root",
             "position": 1,
             "handlers": {},
@@ -218,6 +221,32 @@
             "handlers": {},
             "position": 4,
             "visible": "missing"
+        },
+        "q4v4cz7pv1zqmx1l": {
+            "id": "q4v4cz7pv1zqmx1l",
+            "type": "button",
+            "parentId": "c0f99a9e-5004-4e75-a6c6-36f17490b134",
+            "content": {
+                "text": "Button Text"
+            },
+            "handlers": {
+                "ss-click": "$goToPage_page2"
+            },
+            "position": 8,
+            "visible": true
+        },
+        "h7c5xl1pajgj3kux": {
+            "id": "h7c5xl1pajgj3kux",
+            "type": "button",
+            "parentId": "ib0fzdexax2gjtlb",
+            "content": {
+                "text": "Button Text"
+            },
+            "handlers": {
+                "ss-click": "$goToPage_page1"
+            },
+            "position": 6,
+            "visible": true
         }
     }
 }

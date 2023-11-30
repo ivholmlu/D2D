@@ -116,7 +116,6 @@ def _update_plotly_lice(state):
         values = lice[selected_lice]
         too_high = any(value > data[selected_lice] for value in values)
 
-        
         if len(values) < 51:
             state['missing'] = True
 
