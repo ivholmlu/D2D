@@ -102,7 +102,7 @@ def weather_format(year, client_id, lat, lon):
     df_weather['week'] = df_weather['referencetime'].dt.isocalendar().week
     df_weather['year'] = df_weather['referencetime'].dt.isocalendar().year
 
-    lice_count_table = pd.read_csv('Data/lice_counts_test.csv')
+    lice_count_table = pd.read_csv('Data/lice_counts.csv')
     lice_count_table = lice_count_table.dropna(axis=1, how='all')
 
     # combine year and week into one column in lice_count_table
@@ -117,8 +117,6 @@ def weather_format(year, client_id, lat, lon):
         ['referencetime', 'elementid', 'week', 'year', 'unit', 'sourceid', 'year_week'])
     df_weather = df_weather['value'].mean()
     df_weather = df_weather.reset_index()
-    
-
 
     # combine the year and week columns to one column
     return df_weather, lice_count_table
@@ -127,7 +125,7 @@ def weather_format(year, client_id, lat, lon):
 def join_dataframes(year, client_id, lat, lon):
 
     df_weather, lice_count_table = weather_format(year, client_id, lat, lon)
-    
+
     print(df_weather['elementid'].unique())
     print(df_weather.shape)
 
@@ -137,8 +135,8 @@ def join_dataframes(year, client_id, lat, lon):
     # Pivot the DataFrame based on the 'elementid' column
     pivoted_df = df_weather.pivot(
         index=['referencetime', 'week', 'year', 'year_week'], columns='elementid', values='value')
-    
 
+    print(pivoted_df.shape)
     # Reset the index to the default integer index
     pivoted_df = pivoted_df.reset_index()
 
@@ -158,7 +156,7 @@ def join_dataframes(year, client_id, lat, lon):
     pivoted_df = pivoted_df.set_index('referencetime')
 
     # print unique values in elementid
-
+    print(pivoted_df.shape)
     # columnes to mean
     columns_to_mean = ['mean(air_temperature P1D)',
                        'mean(relative_humidity P1D)', 'mean(wind_speed P1D)']
@@ -176,11 +174,15 @@ def join_dataframes(year, client_id, lat, lon):
     # reset index
     df_weekly = df_weekly.reset_index()
     lice_count_table = lice_count_table.reset_index()
+    print(df_weekly.shape)
+    print(lice_count_table.shape)
 
+    print(df_weekly.head(2))
+    print(lice_count_table.head(2))
     # inner join the two dataframes on week column in df_weekly and year_week column in lice_count_table
     combine_df = pd.merge(df_weekly, lice_count_table,
-                          how='inner', left_on='week', right_on='year_week')
-
+                          how='left', left_on='week', right_on='year_week')
+    print(combine_df.shape)
     # keep referencetime	mean(air_temperature P1D)	mean(relative_humidity P1D)	mean(wind_speed P1D)	sum(precipitation_amount P1D) avgadultfemalelice	avgmobilelice	avgstationarylice	localityname
     columns_to_keep = ['referencetime', 'mean(air_temperature P1D)', 'mean(relative_humidity P1D)', 'mean(wind_speed P1D)',
                        'sum(precipitation_amount P1D)', 'avgadultfemalelice', 'avgmobilelice', 'avgstationarylice', 'seatemperature', 'localityname']
@@ -203,14 +205,17 @@ def join_dataframes(year, client_id, lat, lon):
 
     # Assuming df is your DataFrame
     combine_df = combine_df.rename(columns=column_mapping)
+    # drop the first row
+    combine_df = combine_df.iloc[1:]
     # save as csv
-    combine_df.to_csv('Data/combine_df_test.csv', index=False)
+    print(combine_df.shape)
+    combine_df.to_csv('Data/combine_df_MEGA.csv', index=False)
 
     return combine_df
 
 
-year = '2020'
-lat = '63.469217'
-lon = '7.8523'
+# year = '2020'
+# lat = '63.469217'
+# lon = '7.8523'
 
-dataf = join_dataframes(year, client_id, lat, lon)
+# dataf = join_dataframes(year, client_id, lat, lon)

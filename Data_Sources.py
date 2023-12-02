@@ -141,9 +141,9 @@ def get_year_data(year):
     return df_data
 
 
-def format_data(aar):
+def format_data(year):
 
-    summary_oneyear = get_year_data(aar)
+    summary_oneyear = get_year_data(year)
     # add date column
     summary_oneyear['date'] = pd.to_datetime(summary_oneyear['year'].astype(
         str) + '-W' + summary_oneyear['week'].astype(str) + '-1', format='%Y-W%U-%w')
@@ -153,8 +153,10 @@ def format_data(aar):
     # Convert all column names to lower case
     summary_oneyear.columns = summary_oneyear.columns.str.lower()
     # Save df as csv
-    summary_oneyear.to_csv('Data/summary_oneyear_test.csv', index=False)
-    
+    summary_oneyear.to_csv('Data/summary_oneyear.csv', index=False)
+
+    print('Data saved to csv')
+
     return summary_oneyear
 
 
@@ -243,16 +245,17 @@ def format_lice(aar, localityname, data):
 
     if not data_filtered.empty:  # Check if there are rows matching the condition
         locality_value = data_filtered['localityno'].values[0]
-        
+
         lice_counts = get_lice_counts(token, aar, locality_value)
         lice_counts.columns = lice_counts.columns.str.lower()
-        lice_counts.to_csv('Data/lice_counts_test.csv', index=False)
+        lice_counts.to_csv('Data/lice_counts.csv', index=False)
+        print('Lice data saved to csv')
         return lice_counts
     else:
         print(f"No data found for locality: {localityname}")
 
 
-aar = 2020
-locality = "Andholmen 1"
-data = format_data(aar)
-format_lice(aar, locality, data)
+# year = 2021
+# locality = "Andholmen 1"
+# data_1 = format_data(year)
+# format_lice(year, locality, data_1)

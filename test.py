@@ -1,231 +1,372 @@
-import requests
-from No_sync.credentials import config
+from pyspark.sql import SparkSession
+import streamsync as ss
 import pandas as pd
-from datetime import datetime
+import plotly.express as px
+import plotly.graph_objects as go
+# from ../../Data_Sources.ipynb import get_year_data()
+from data_Sources import format_data, format_lice
 
-# Get an access token from the API
+"""
+# Its name starts with _, so this function won't be exposed
+
+# Import data
+import os
+os.environ["JAVA_HOME"] = "C:\Program Files\Java\jdk-20"
+# If you are using environments in Python, you can set the environment variables like this:
+# or similar to "/Users/kristian/miniforge3/envs/tf_M1/bin/python"
+os.environ["PYSPARK_PYTHON"] = "python"
+# os.environ["PYSPARK_DRIVER_PYTHON"] = "python" # or similar to "/Users/kristian/miniforge3/envs/tf_M1/bin/python"
+# Set the Hadoop version to the one you are using, e.g., none:
+os.environ["PYSPARK_HADOOP_VERSION"] = "without"
+
+spark = SparkSession.builder.appName('SparkCassandraApp').\
+    config('spark.jars.packages', 'com.datastax.spark:spark-cassandra-connector_2.12:3.4.1').\
+    config('spark.cassandra.connection.host', 'localhost').\
+    config('spark.sql.extensions', 'com.datastax.spark.connector.CassandraSparkExtensions').\
+    config('spark.sql.catalog.mycatalog', 'com.datastax.spark.connector.datasource.CassandraCatalog').\
+    config('spark.cassandra.connection.port', '9042').getOrCreate()
+# Some warnings are to be expected.
+"""
 
 
-def get_token():
-    if not config['client_id']:
-        raise ValueError('client_id must be set in credentials.py')
+def _get_main_df():
 
-    if not config['client_secret']:
-        raise ValueError('client_secret must be set in credentials.py')
-
-    req = requests.post(config['token_url'],
-                        data={
-        'grant_type': 'client_credentials',
-        'client_id': config['client_id'],
-        'client_secret': config['client_secret'],
-        'scope': 'api'
-    },
-        headers={'content-type': 'application/x-www-form-urlencoded'})
-
-    req.raise_for_status()
-    print('Token request successful')
-    return req.json()
-
-# Get the weekly summary for a given year and week
-
-
-def get_week_summary(token, year, week):
+    main_df = pd.read_csv('Data/summary_oneyear.csv')
     """
-    Fetches the weekly summary data for a specified year and week.
-
-    Args:
-        token (dict): Access token information.
-        year (int): The year for which to fetch the data.
-        week (int): The week of the year for which to fetch the data.
-
-    Returns:
-        dict: JSON response containing the weekly summary data.
+    main_df = df_fish = spark.read.format("org.apache.spark.sql.cassandra").options(
+        table="fish_table_year", keyspace="fish_keyspace").load().toPandas()
     """
-    url = f"{config['api_base_url']}/v1/geodata/fishhealth/locality/{year}/{week}"
-    headers = {
-        'authorization': 'Bearer ' + token['access_token'],
-        'content-type': 'application/json',
-    }
-
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
+    return main_df
 
 
-def make_df(weeksummary):
+def get_year_df(state):
+    year = state["year"]
+    year = int(year)
+    print(year)
+    if 2000 <= year <= 2022:
+        tullogtoys = format_data(year)
+        state["fishplant_df"] = tullogtoys
+        _get_main_df()
+        _update_plotly_fishplant(state)
+        _update_plotly_fishplant_pie(state)
+        _get_JSON(state)
+        _get_JSON_col(initial_state)
+
+
+def get_lice_df(state):
+    selected_plant = state["selected_plant"]
+    fishplant = state["fishplant_df"]
+    year = state["year"]
+    year = int(year)
+
+    print(selected_plant)
+    if selected_plant != "all":
+        lice_df = format_lice(year, selected_plant, fishplant)
+        state["lice_df"] = lice_df
+        _update_plotly_lice(state)
+        _model_predction(state)
+        _get_JSON_licetype(state)
+
+
+def _get_lice_df():
+    lice_df = pd.read_csv('Data/combine_df_test.csv')
     """
-    Create a DataFrame from the week summary
+    lice_df = df_fish = spark.read.format("org.apache.spark.sql.cassandra").options(
+        table="lice_table", keyspace="fish_keyspace").load().toPandas()
     """
-    df_data = pd.DataFrame()
+    return lice_df
 
-    if 'localities' in weeksummary:
-        localities = weeksummary['localities']
-
-        if localities:
-            # Extract common information
-            common_info = {
-                'year': weeksummary['year'],
-                'week': weeksummary['week']
-            }
-
-            # Extract and flatten the localities data into a list of dictionaries
-            data_list = []
-            for information in localities:
-                data = {**common_info, **information}
-                data_list.append(data)
-
-            # Create the DataFrame directly from the list of dictionaries
-            df_data = pd.DataFrame(data_list)
-
-    return df_data
+# Plot fishplant
 
 
-def weeks_of_the_year(year=None):
-    """
-    Create a DataFrame with the week number and year for each week of the year
-    """
-    # Get the current year and the week of the year
-    if year is None:
-        today = datetime.now()
-        year = today.year
-        day_of_year = today.strftime('%j')
-        week_of_year = (int(day_of_year) - 1) // 7 + 1
+def _model_predction(state):
 
-        # Calculate the number of weeks left in the previous year
-        weeks_left_last_year = 52 - week_of_year
+    lice = state["lice_df"]
+    selected_lice = state["selected_lice"]
+    type_lice = ['avgadultfemalelice', 'avgmobilelice', 'avgstationarylice']
 
-        # Create DataFrames for the current year and the remaining weeks from the previous year
-        week_df = pd.DataFrame(
-            {'Week': range(1, week_of_year + 1), 'Year': [year] * week_of_year})
-        week_df_last = pd.DataFrame({'Week': range(
-            1, weeks_left_last_year + 1), 'Year': [year - 1] * weeks_left_last_year})
+    if selected_lice in type_lice:
+        from statsmodels.tsa.arima.model import ARIMA
 
-        # Concatenate the two DataFrames
-        week_df = pd.concat([week_df_last, week_df], ignore_index=True)
-        # add week_of_year to week where year is current year - 1
-        week_df.loc[week_df['Year'] == year - 1, 'Week'] += week_of_year
+        import statsmodels.api as sm
+
+        mod = sm.tsa.statespace.SARIMAX(lice[selected_lice],
+                                        lice[["seatemperature", "mean_air_temperature", "mean_relative_humidity",
+                                              "mean_wind_speed", "sum_precipitation_amount"]],
+                                        order=(1, 1, 1), seasonal_order=(0, 0, 0, 52), trend='c')
+        res = mod.fit(disp=False)
+
+        message = str(res.summary())
     else:
-        week_numbers = list(range(1, 53))
+        message = "Choose lice type"
 
-        # Create a DataFrame with a "Week" column containing the week numbers
-        week_df = pd.DataFrame({'Week': week_numbers})
-
-        # Add a "Year" column with the specified year
-        week_df['Year'] = year
-
-    return week_df
+    state["message"] = message
 
 
-def get_year_data(year):
-    token = get_token()
-    weeks_df = weeks_of_the_year(year)
+def _update_plotly_lice(state):
+    lice = state["lice_df"]
+    selected_lice = state["selected_lice"]
+    import random
+    import plotly.graph_objs as go  # Import go from Plotly for adding red lines
 
-    # Create a list to store individual DataFrames for each week
-    df_list = []
-
-    for week, year in weeks_df.values:
-        weeksummary = get_week_summary(token, year, week)
-        df_to_concat = make_df(weeksummary)
-        df_list.append(df_to_concat)
-
-    # Concatenate all DataFrames in the list into one DataFrame
-    df_data = pd.concat(df_list, ignore_index=True)
-
-    return df_data
-
-
-def format_data(aar):
-    summary_oneyear = get_year_data(aar)
-    # Add date column
-    summary_oneyear['date'] = pd.to_datetime(summary_oneyear['year'].astype(
-        str) + '-W' + summary_oneyear['week'].astype(str) + '-1', format='%Y-W%U-%w')
-    # Save df as csv
-    summary_oneyear.to_csv('Data/summary_oneyear_test_2.csv', index=False)
-
-
-def get_detailed_week(token, year, week, localityId):
-    """
-    Get the weekly summary for a given year and week
-    """
-    url = f"{config['api_base_url']}/v1/geodata/fishhealth/locality/{localityId}/{year}/{week}"
-    headers = {
-        'authorization': 'Bearer ' + token['access_token'],
-        'content-type': 'application/json',
+    data = {
+        'mean_air_temperature': 20,
+        'mean_relative_humidity': 100,
+        'mean_wind_speed': 15,
+        'sum_precipitation_amount': 130,
+        'avgadultfemalelice': 0.9,
+        'avgmobilelice': 3,
+        'avgstationarylice': 0.7,
+        'seatemperature': 17,
     }
+    values = []
 
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
+    if selected_lice != "Choose lice type":
+        lice = lice[['referencetime', selected_lice]]
+        # Create a line plot using Plotly Express
+        fig_lice = px.line(lice, x='referencetime', y=selected_lice)
 
+        # Get the first and last values along the x-axis
+        x_values = lice['referencetime']
+        first_x = x_values.iloc[0]
+        last_x = x_values.iloc[-1]
 
-def extract_columns_from_json(json_data, desired_columns=['avgAdultFemaleLice', 'avgMobileLice', 'avgStationaryLice', 'localityName', 'speciesList', 'seaTemperature']):
-    """
-    Extract specified columns from a JSON input and create a DataFrame.
+        # Create a red line trace from the first value to the last value along the x-axis
+        red_line_trace = go.Scatter(
+            x=[first_x, last_x],  # Span from the first to the last value along x
+            # You can customize the y-coordinates as needed
+            y=[data[selected_lice], data[selected_lice]],
+            mode='lines',
+            line=dict(color='red'),
+            name='Red Line'
+        )
 
-    :param json_data: JSON data as a dictionary.
-    :param desired_columns: List of column names to extract.
-    :return: A DataFrame containing the extracted columns.
-    """
-    # Extract columns from 'localityWeek' if they exist
-    locality_week_data = json_data.get('localityWeek', {})
-    locality_week_columns = {col: locality_week_data.get(col) for col in [
-        'avgAdultFemaleLice', 'avgMobileLice', 'avgStationaryLice', 'seaTemperature']}
+        # Add the red line trace to the figure
+        fig_lice.add_trace(red_line_trace)
 
-    # Extract 'speciesList' from 'aquaCultureRegister' if it exists
-    aqua_culture_register_data = json_data.get('aquaCultureRegister', {})
-    species_list = aqua_culture_register_data.get('speciesList')
+        # Check if there are values higher than the red line
+        values = lice[selected_lice]
+        too_high = any(value > data[selected_lice] for value in values)
 
-    # Combine the extracted columns into a single dictionary
-    filtered_data = {
-        'avgAdultFemaleLice': locality_week_columns.get('avgAdultFemaleLice'),
-        'avgMobileLice': locality_week_columns.get('avgMobileLice'),
-        'avgStationaryLice': locality_week_columns.get('avgStationaryLice'),
-        'seaTemperature': locality_week_columns.get('seaTemperature'),
-        'localityName': json_data.get('localityName'),
-        'speciesList': species_list
-    }
+        if lice[selected_lice].isnull().values.any():
+            state['missing'] = True
+        else:
+            state['missing'] = False
 
-    # Convert the dictionary into a DataFrame
-    df = pd.DataFrame([filtered_data])
-
-    return df
-
-
-def get_lice_counts(token, aar, locality=32277):
-    """
-    Get the lice counts for a given locality and a list of weeks.
-    """
-    weeks_df = weeks_of_the_year(aar)
-    lice_counts = pd.DataFrame()
-    for week, year in weeks_df.values:
-        weekdetails = get_detailed_week(token, year, week, locality)
-
-        # Extract the desired columns from the JSON data
-        df = extract_columns_from_json(weekdetails)
-
-        # Create a new column combining "year" and "week" as a string
-        df['year_week'] = f"{year}-{week}"
-
-        # Convert the "year_week" column to datetime format
-        df['year_week'] = pd.to_datetime(
-            df['year_week'] + '-1', format='%Y-%U-%w')
-
-        # Keep the original "week" and "year" columns
-        df['week'] = week
-        df['year'] = year
-
-        # Concatenate the DataFrames
-        lice_counts = pd.concat([lice_counts, df], ignore_index=True)
-    return lice_counts
+        # Set the 'too_high' flag in the state
+        state["too_high"] = too_high
+        state["plotly_lice"] = fig_lice
 
 
-def format_lice(aar):
-    token = get_token()
-    lice_counts = get_lice_counts(token, aar)
-    lice_counts.columns = lice_counts.columns.str.lower()
-    lice_counts.to_csv('Data/lice_counts_test_2.csv', index=False)
+def _update_plot_overtime(state):
+    fishplant = state["fishplant_df"]
+    selected_columns = state["selected_columns"]
+
+    if selected_columns != "all":
+
+        # if column type is boolean, get the proportion of True
+        if fishplant[selected_columns].dtype == bool:
+            # Group by 'date' and calculate the mean for numeric columns
+            fishplant = fishplant.groupby(['date']).mean(
+                numeric_only=True).reset_index()
+
+        # Assuming 'name' and 'date' are columns in your DataFrame
+        fishplant = fishplant[['date'] + [selected_columns]]
+        # Create a line plot using Plotly Express
+        fig_overtime = px.line(fishplant, x='date', y=selected_columns)
+
+        state["plot_overtime"] = fig_overtime
 
 
-aar = 2020
-format_data(aar)
-format_lice(aar)
+def _update_plotly_fishplant_pie(state):
+    fishplant = state["fishplant_df"]
+    selected = state["selected_plant"]
+
+    if selected != "all":
+        fishplant = fishplant[fishplant['name'] == selected]
+        selected_data = fishplant
+    else:
+        selected_data = fishplant
+        print('hei')
+
+    # Calculate the counts for 'haspd' column
+    value_counts = selected_data['haspd'].value_counts()
+
+    # Create a pie chart using Plotly Express
+    fig_fishplant_pie = px.pie(
+        names=value_counts.index,
+        values=value_counts.values,
+        title='Proportion of localities reporting Pancreas Disease (PD/Pd)',
+    )
+
+    # Assign the pie chart to state
+    state["plotly_fishplant_pie"] = fig_fishplant_pie
+
+
+def _update_plotly_fishplant(state):
+    fishplant = state["fishplant_df"]
+
+    # get unique name and lat lon
+    fishplant = fishplant.drop_duplicates(subset=['name'])
+    fishplant = fishplant[['name', 'lat', 'lon']]
+    fishplant = fishplant.reset_index(drop=True)
+
+    selected_num = state["selected_num"]
+    sizes = [10]*len(fishplant)
+    if selected_num != -1:
+        sizes[selected_num] = 20
+    fig_fishplant = px.scatter_mapbox(
+        fishplant,
+        lat="lat",
+        lon="lon",
+        hover_name="name",
+        hover_data=["lat", "lon"],
+        color_discrete_sequence=["darkgreen"],
+        zoom=4,
+        height=1000,
+        width=700,
+    )
+    overlay = fig_fishplant['data'][0]
+    overlay['marker']['size'] = sizes
+    fig_fishplant.update_layout(mapbox_style="open-street-map")
+    fig_fishplant.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    state["plotly_fishplant"] = fig_fishplant
+
+
+def handle_click(state, payload):
+    fishplant = state["fishplant_df"]
+
+    fishplant = fishplant.drop_duplicates(subset=['name'])
+    fishplant = fishplant[['name', 'lat', 'lon', 'haspd', "localityno"]]
+    fishplant = fishplant.reset_index(drop=True)
+
+    state["selected"] = fishplant["name"].values[payload[0]["pointNumber"]]
+    state["selected_num"] = payload[0]["pointNumber"]
+    state["selected_plant"] = state["selected"]
+
+    selected_plant = state["selected_plant"]
+    year = state["year"]
+    year = int(year)
+
+    print(fishplant)
+
+    if selected_plant != "all":
+        lice_df = format_lice(year, selected_plant, fishplant)
+        state["lice_df"] = lice_df
+        _update_plotly_lice(state)
+        _model_predction(state)
+        _get_JSON_licetype(state)
+
+    _update_plotly_fishplant(state)
+    _update_plotly_fishplant_pie(state)
+
+
+def handle_choice(state, payload):
+    fishplant = state["fishplant_df"]
+    fishplant = fishplant.drop_duplicates(subset=['name'])
+    fishplant = fishplant[['name']]
+    fishplant = fishplant.reset_index(drop=True)
+
+    year = state["year"]
+    year = int(year)
+
+    state["selected"] = fishplant["name"].values[int(payload)]
+    state["selected_num"] = int(payload)
+    state["selected_plant"] = state["selected"]
+    print("change plant")
+
+
+def handle_columns(state, payload):
+    fishplant = state["fishplant_df"]
+    columns = fishplant.columns
+    columns = columns.drop(
+        ['week', 'year', 'localityno', 'localityweekid', 'name', 'municipality', 'municipalityno', 'lat', 'lon', 'date'])
+
+    state["selected_columns"] = columns.values[int(payload)]
+    state["selected_columns_num"] = int(payload)
+
+    _update_plot_overtime(state)
+
+
+def get_lice(state, payload):
+
+    lice = state["lice_df"]
+    columns = lice.columns
+    print(columns)
+
+    state["selected_lice"] = columns.values[int(payload)]
+    state["selected_lice_num"] = int(payload)
+
+    _update_plotly_lice(state)
+    _model_predction(state)
+
+
+def get_JSON(state):
+    fishplant = state["fishplant_df"]
+    # Create JSON with keys list(range(9)), and restaurant names as values
+    fishplant = fishplant.drop_duplicates(subset=['name'])
+    fishplant = fishplant[['name']]
+    fishplant = fishplant.reset_index(drop=True)
+    # sort alphabetically
+    fishplant = fishplant.sort_values(by=['name'])
+
+    my_json = dict(zip(list(range(len(fishplant))), fishplant["name"].values))
+    # Convert keys to strings
+    my_json = {str(key): value for key, value in my_json.items()}
+    state["fishplant_JSON"] = my_json
+
+
+def _get_JSON_col(state):
+    fishplant = state["fishplant_df"]
+    columns = fishplant.columns
+
+    columns = columns.drop(
+        ['week', 'year', 'localityno', 'localityweekid', 'name', 'municipality', 'municipalityno', 'lat', 'lon', 'date'])
+
+    my_json = dict(zip(list(range(len(columns))), columns.values))
+    # Convert keys to strings
+    my_json = {str(key): value for key, value in my_json.items()}
+    state["columns_JSON"] = my_json
+
+
+def _get_JSON_licetype(state):
+    lice = state["lice_df"]
+    columns = lice.columns
+
+    my_json = dict(zip(list(range(len(columns))), columns.values))
+    # Convert keys to strings
+    my_json = {str(key): value for key, value in my_json.items()}
+    state["lice_JSON"] = my_json
+
+
+# Initialise the state
+# "_my_private_element" won't be serialised or sent to the frontend,
+# because it starts with an underscore (not used here)
+initial_state = ss.init_state({
+    "my_app": {
+        "title": "Fishplant selection"
+    },
+    "_my_private_element": 1337,
+    "selected": "Click to select",
+    "selected_num": -1,
+    "fishplant_df": _get_main_df(),
+    "selected_plant": "all",
+    "selected_columns": "all",
+    "selected_columns_num": -1,
+    "selected_lice": "Choose lice type",
+    "selected_lice_num": -1,
+    "lice_df": _get_lice_df(),
+    "message": None,
+    "too_high": False,
+    "missing": False,
+    "year": 2021,
+})
+
+_update_plotly_fishplant(initial_state)
+_update_plotly_fishplant_pie(initial_state)
+_get_JSON_col(initial_state)
+_update_plot_overtime(initial_state)
+_get_JSON_licetype(initial_state)
+_update_plotly_lice(initial_state)
+_model_predction(initial_state)
+get_JSON(initial_state)
